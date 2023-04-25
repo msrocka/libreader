@@ -60,7 +60,7 @@ public class DefaultLibReader implements LibReader {
 	}
 
 	@Override
-	public MatrixReader matrix(LibMatrix matrix) {
+	public MatrixReader matrixOf(LibMatrix matrix) {
 		return _matrices.computeIfAbsent(
 			matrix, m -> lib.getMatrix(m).orElse(null)
 		);
@@ -86,7 +86,7 @@ public class DefaultLibReader implements LibReader {
 
 				// if the matrix is sparse then read the
 				// full matrix, cache it, and extract the
-				// diagonale
+				// diagonal
 				var file = MatrixFile.of(dir, matrix);
 				if (file.isEmpty())
 					return null;
@@ -103,4 +103,38 @@ public class DefaultLibReader implements LibReader {
 					.data();
 		});
 	}
+
+
+@Override
+public double[] columnOf(LibMatrix matrix, int j) {
+	var cache = _columns.computeIfAbsent(
+		matrix, m -> new TIntObjectHashMap<>());
+	var column = cache.get(j);
+	if (column != null)
+		return column;
+
+	// check if the matrix is cached already
+	var fullMatrix = _matrices.get(matrix);
+	if (fullMatrix != null) {
+		column = fullMatrix.column(j);
+		cache.put(j, column);
+		return column;
+	}
+
+	// read & cache the full matrix in case
+	// of a sparce matrix file
+	var file = MatrixFile.of(lib, matrix);
+	if (file.isEmpty())
+		return null;
+	if (file.isSparse()) {
+		fullMatrix = file.readFull();
+		_matrices.
+			}
+
+
+}
+
+	private MatrixFile fullIfSparse
+
+
 }

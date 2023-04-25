@@ -8,9 +8,17 @@ import org.openlca.core.matrix.index.TechIndex;
 
 public interface LibReader {
 
-	Optional<TechIndex> techIndex();
+	TechIndex techIndex();
 
-	Optional<EnviIndex> enviIndex();
+	EnviIndex enviIndex();
 
-	Optional<ImpactIndex> impactIndex();
+	ImpactIndex impactIndex();
+
+	MatrixReader matrixOf(LibMatrix matrix);
+
+	double[] costs();
+
+	double[] diagonalOf(LibMatrix matrix);
+
+	double[] columnOf(LibMatrix matrix, int col);
 }

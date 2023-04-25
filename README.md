@@ -10,6 +10,6 @@ in some cases.
 
 Also, encrypted libraries could be handled with this?
 
-```
+```java
 var reader = EncryptedLibReader.of(secret, wrappedReader);
 ```

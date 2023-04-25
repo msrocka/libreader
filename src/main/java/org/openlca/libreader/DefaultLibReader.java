@@ -13,13 +13,22 @@ public class DefaultLibReader implements LibReader {
 	private final IDatabase db;
 	private final Library lib;
 
-	private TechIndex techIndex;
-	private EnviIndex enviIndex;
-	private ImpactIndex impactIndex;
+	// cached values
+	private TechIndex _techIndex;
+	private EnviIndex _enviIndex;
+	private ImpactIndex _impactIndex;
+	private double[] _costs;
+
+	private final EnumMap<LibMatrix, MatrixReader> _matrices;
+	private final EnumMap<LibMatrix, double[]> _diagonals;
+	private final EnumMap<LibMatrix, TIntObjectHashMap<double[]> _columns;
 
 	private DefaultLibReader(IDatabase db, Library lib) {
 		this.db = db;
 		this.lib = lib;
+		_matrices = new EnumHashMap<>(LibMatrix.class);
+		_diagonals = new EnumHashMap<LibMatrix.class>;
+		_columns = new EnumHashMap<LibMatrix.class>;
 	}
 
 	public static LibReader of(IDatabase db, Library lib) {
@@ -27,29 +36,71 @@ public class DefaultLibReader implements LibReader {
 	}
 
 	@Override
-	public Optional<TechIndex> techIndex() {
-		if (techIndex != null)
-			return Optional.of(techIndex);
-		var opt = lib.syncTechIndex(db);
-		opt.ifPresent(techFlows -> techIndex = techFlows);
-		return opt;
+	public TechIndex techIndex() {
+		if (_techIndex == null) {
+			_techIndex = lib.syncTechIndex(db).orElseNull();
+		}
+		return _techIndex;
 	}
 
 	@Override
-	public Optional<EnviIndex> enviIndex() {
-		if (enviIndex != null)
-			return Optional.of(enviIndex);
-		var opt = lib.syncEnviIndex(db);
-		opt.ifPresent(enviFlows -> enviIndex = enviFlows);
-		return opt;
+	public EnviIndex enviIndex() {
+		if (_enviIndex == null) {
+			_enviIndex = lib.syncEnviIndex(db).orElseNull();
+		}
+		return _enviIndex;
 	}
 
 	@Override
-	public Optional<ImpactIndex> impactIndex() {
-		if (impactIndex != null)
-			return Optional.of(impactIndex);
-		var opt = lib.syncImpactIndex(db);
-		opt.ifPresent(impactDescriptors -> impactIndex = impactDescriptors);
-		return opt;
+	public ImpactIndex impactIndex() {
+		if (_impactIndex == null) {
+			_impactIndex = lib.syncImpactIndex(db).orElseNull();
+		}
+		return _impactIndex;
+	}
+
+	@Override
+	public MatrixReader matrix(LibMatrix matrix) {
+		return _matrices.computeIfAbsent(
+			matrix, m -> lib.getMatrix(m).orElse(null)
+		);
+	}
+
+	@Override
+	public double[] costs() {
+		if (_costs == null) {
+			_costs = lib.getCosts();
+		}
+		return _costs;
+	}
+
+	@Override
+	public double[] diagonalOf(LibMatrix matrix) {
+		return _diagonals.computeIfAbsent(matrix, m -> {
+				// when the full-matrix was already loaded,
+				// read it from that matrix in-memory
+				var fullMatrix = _matrices.get(matrix);
+				if (fullMatrix != null) {
+					return fullMatrix.diag();
+				}
+
+				// if the matrix is sparse then read the
+				// full matrix, cache it, and extract the
+				// diagonale
+				var file = MatrixFile.of(dir, matrix);
+				if (file.isEmpty())
+					return null;
+				if (file.isSparse()) {
+					fullMatrix = file.readFull();
+					_matrices.put(matrix, fullMatrix);
+					return fullMatrix.diag();
+				}
+
+				// finally, read it from a dense array
+				// on disk
+				return Array2d.readDiag(file.file())
+					.asDoubleArray()
+					.data();
+		});
 	}
 }

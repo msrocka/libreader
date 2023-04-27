@@ -12,7 +12,11 @@ import org.openlca.core.matrix.index.ImpactIndex;
 import org.openlca.core.matrix.index.TechIndex;
 import org.openlca.npy.Array2d;
 
-public class DefaultLibReader implements LibReader {
+/**
+ * The default implementation of the {@link LibReader} interface that caches
+ * data that were already read from files.
+ */
+class DefaultLibReader implements LibReader {
 
 	private final IDatabase db;
 	private final Library lib;
@@ -27,7 +31,7 @@ public class DefaultLibReader implements LibReader {
 	private final EnumMap<LibMatrix, double[]> _diagonals;
 	private final EnumMap<LibMatrix, TIntObjectHashMap<double[]>> _columns;
 
-	private DefaultLibReader(IDatabase db, Library lib) {
+	private DefaultLibReader(Library lib, IDatabase db) {
 		this.db = db;
 		this.lib = lib;
 		_matrices = new EnumMap<>(LibMatrix.class);
@@ -35,8 +39,8 @@ public class DefaultLibReader implements LibReader {
 		_columns = new EnumMap<>(LibMatrix.class);
 	}
 
-	public static LibReader of(IDatabase db, Library lib) {
-		return new DefaultLibReader(db, lib);
+	static LibReader of(Library lib, IDatabase db) {
+		return new DefaultLibReader(lib, db);
 	}
 
 	@Override

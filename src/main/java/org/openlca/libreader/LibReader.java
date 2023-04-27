@@ -1,5 +1,6 @@
 package org.openlca.libreader;
 
+import org.openlca.core.database.IDatabase;
 import org.openlca.core.library.LibMatrix;
 import org.openlca.core.library.Library;
 import org.openlca.core.matrix.format.MatrixReader;
@@ -8,6 +9,10 @@ import org.openlca.core.matrix.index.ImpactIndex;
 import org.openlca.core.matrix.index.TechIndex;
 
 public interface LibReader {
+
+	static LibReader defaultOf(Library lib, IDatabase db) {
+		return DefaultLibReader.of(lib, db);
+	}
 
 	Library library();
 

@@ -30,4 +30,6 @@ public interface LibReader {
 
 	double[] columnOf(LibMatrix matrix, int col);
 
+	default void dispose(){
+	}
 }

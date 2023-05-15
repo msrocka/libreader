@@ -61,4 +61,16 @@ class MatrixCache {
 			m, $ -> new TIntObjectHashMap<>());
 		cache.put(j, column);
 	}
+
+	void clear() {
+		matrices.clear();
+		diagonals.clear();
+		columns.clear();
+	}
+
+	void clearValuesOf(LibMatrix m) {
+		matrices.remove(m);
+		diagonals.remove(m);
+		columns.remove(m);
+	}
 }

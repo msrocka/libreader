@@ -23,7 +23,7 @@ public class CachingLibReader implements LibReader {
 		this.cache = new MatrixCache();
 	}
 
-	public CachingLibReader of(LibReader reader) {
+	public static CachingLibReader of(LibReader reader) {
 		return new CachingLibReader(reader);
 	}
 

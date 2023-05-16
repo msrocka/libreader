@@ -22,6 +22,16 @@ public class SolvingLibReader implements LibReader {
 		this.solver = Objects.requireNonNull(solver);
 	}
 
+	public static SolvingLibReader of(LibReader reader, MatrixSolver solver) {
+		return reader instanceof CachingLibReader c
+			? new SolvingLibReader(c, solver)
+			: new SolvingLibReader(CachingLibReader.of(reader), solver);
+	}
+
+	MatrixCache cache() {
+		return reader.cache();
+	}
+
 	@Override
 	public Library library() {
 		return reader.library();
@@ -106,11 +116,59 @@ public class SolvingLibReader implements LibReader {
 	}
 
 	private double[] solutionOf(int j) {
-
+		var cached = cachedColumnOf(LibMatrix.INV, j);
+		if (cached != null)
+			return cached;
+		if (factorization == null) {
+			var techMatrix = reader.matrixOf(LibMatrix.A);
+			if (techMatrix == null)
+				return null;
+			factorization = solver.factorize(techMatrix);
+		}
+		var s = factorization.solve(j, 1.0);
+		reader.cache().putColumn(LibMatrix.INV, j, s);
+		return s;
 	}
 
 	private double[] intensitiesOf(int j) {
+		var cached = cachedColumnOf(LibMatrix.M, j);
+		if (cached != null)
+			return cached;
+		var enviMatrix = reader.matrixOf(LibMatrix.B);
+		if (enviMatrix == null)
+			return null;
+		var s = solutionOf(j);
+		if (s == null)
+			return null;
+		var g = solver.multiply(enviMatrix, s);
+		reader.cache().putColumn(LibMatrix.M, j, g);
+		return g;
+	}
 
+	private double[] cachedColumnOf(LibMatrix m, int j) {
+		var cache = reader.cache();
+		var column = cache.columnOf(m, j);
+		if (column != null)
+			return column;
+		var matrix = cache.matrixOf(m);
+		return matrix != null
+			? matrix.getColumn(j)
+			: null;
+	}
+
+	/**
+	 * Resets this reader by disposing cached results. This method must be called
+	 * whenever library data change (e.g. the technology or intervention matrix in
+	 * the steps of a Monte Carlo simulation).
+	 */
+	public void reset() {
+		if (factorization != null) {
+			factorization.dispose();
+			factorization = null;
+		}
+		var cache = reader.cache();
+		cache.clearValuesOf(LibMatrix.INV);
+		cache.clearValuesOf(LibMatrix.M);
 	}
 
 	@Override

@@ -1,6 +1,5 @@
 package org.openlca.libreader;
 
-import org.openlca.core.database.IDatabase;
 import org.openlca.core.library.LibMatrix;
 import org.openlca.core.library.Library;
 import org.openlca.core.matrix.format.MatrixReader;
@@ -16,8 +15,8 @@ public class SimulatingLibReader implements LibReader {
 		this.reader = reader;
 	}
 
-	public static LibReader of(IDatabase db, Library lib) {
-		return new SimulatingLibReader(DefaultLibReader.of(lib, db));
+	public static LibReader of(LibReader reader) {
+		return new SimulatingLibReader(reader);
 	}
 
 	@Override

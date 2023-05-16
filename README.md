@@ -16,7 +16,7 @@ var reader =
   SolvingLibReader.of(
     CachingLibReader.of(
       DecryptingLibReader.of(
-        DirectLibReader.of(database, library))));
+        DirectLibReader.of(database, library), secret)));
 libRegistry.add("library xy", reader);
 ```
 

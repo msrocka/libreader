@@ -11,7 +11,8 @@ import org.openlca.core.matrix.index.TechIndex;
 public interface LibReader {
 
 	static LibReader defaultOf(Library lib, IDatabase db) {
-		return DefaultLibReader.of(lib, db);
+		var direct = DirectLibReader.of(lib, db);
+		return CachingLibReader.of(direct);
 	}
 
 	Library library();

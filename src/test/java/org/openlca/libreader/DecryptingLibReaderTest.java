@@ -1,7 +1,5 @@
 package org.openlca.libreader;
 
-import static org.junit.Assert.*;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -24,6 +22,8 @@ import javax.crypto.spec.SecretKeySpec;
 import java.io.File;
 import java.nio.file.Files;
 import java.util.List;
+
+import static org.junit.Assert.assertEquals;
 
 public class DecryptingLibReaderTest {
 
@@ -83,10 +83,10 @@ public class DecryptingLibReaderTest {
 			() -> cipherOf(Cipher.DECRYPT_MODE),
 			DirectLibReader.of(lib, tdb),
 			tdb));
+		// var reader = DirectLibReader.of(lib, tdb);
 
 		// run tests
 		checkTechIndex(reader);
-
 	}
 
 	private void encrypt(Library lib) throws Exception {
@@ -97,8 +97,7 @@ public class DecryptingLibReaderTest {
 				continue;
 			var inData = Files.readAllBytes(input.toPath());
 			var cipher = cipherOf(Cipher.ENCRYPT_MODE);
-			cipher.update(inData);
-			var outData = cipher.doFinal();
+			var outData = cipher.doFinal(inData);
 			var output = new File(lib.folder(), name + ".enc");
 			Files.write(output.toPath(), outData);
 			Files.delete(input.toPath());

@@ -95,9 +95,9 @@ public class DecryptingLibReader implements LibReader {
 			return null;
 		try {
 			var data = Files.readAllBytes(file.toPath());
-			var decrypt = cipher.get();
-			decrypt.update(data);
-			return new ByteArrayInputStream(decrypt.doFinal());
+			var decoder = cipher.get();
+			var decoded = decoder.doFinal(data);
+			return new ByteArrayInputStream(decoded);
 		} catch (Exception e) {
 			throw new RuntimeException(
 				"failed to decrypt file: " + name, e);

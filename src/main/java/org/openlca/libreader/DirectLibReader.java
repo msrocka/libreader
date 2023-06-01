@@ -7,6 +7,9 @@ import org.openlca.core.matrix.format.MatrixReader;
 import org.openlca.core.matrix.index.EnviIndex;
 import org.openlca.core.matrix.index.ImpactIndex;
 import org.openlca.core.matrix.index.TechIndex;
+import org.openlca.core.matrix.io.index.IxEnviIndex;
+import org.openlca.core.matrix.io.index.IxImpactIndex;
+import org.openlca.core.matrix.io.index.IxTechIndex;
 import org.openlca.npy.Array2d;
 
 /**
@@ -34,17 +37,23 @@ public class DirectLibReader implements LibReader {
 
 	@Override
 	public TechIndex techIndex() {
-		return lib.syncTechIndex(db).orElse(null);
+		return IxTechIndex.readFromDir(lib.folder())
+			.syncWith(db)
+			.orElse(null);
 	}
 
 	@Override
 	public EnviIndex enviIndex() {
-		return lib.syncEnviIndex(db).orElse(null);
+		return IxEnviIndex.readFromDir(lib.folder())
+			.syncWith(db)
+			.orElse(null);
 	}
 
 	@Override
 	public ImpactIndex impactIndex() {
-		return lib.syncImpactIndex(db).orElse(null);
+		return IxImpactIndex.readFromDir(lib.folder())
+			.syncWith(db)
+			.orElse(null);
 	}
 
 	@Override

@@ -7,24 +7,36 @@ import org.openlca.core.matrix.format.MatrixReader;
 import org.openlca.core.matrix.index.EnviIndex;
 import org.openlca.core.matrix.index.ImpactIndex;
 import org.openlca.core.matrix.index.TechIndex;
+import org.openlca.core.matrix.io.index.IxEnviIndex;
+import org.openlca.core.matrix.io.index.IxImpactIndex;
+import org.openlca.core.matrix.io.index.IxTechIndex;
 
-import javax.crypto.SecretKey;
+import javax.crypto.Cipher;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.util.Objects;
+import java.util.function.Supplier;
 
 public class DecryptingLibReader implements LibReader {
 
 	private final IDatabase db;
-	private final SecretKey key;
+	private final Supplier<Cipher> cipher;
 	private final LibReader reader;
 
-	private DecryptingLibReader(SecretKey key, LibReader reader, IDatabase db) {
+	private DecryptingLibReader(
+		Supplier<Cipher> cipher, LibReader reader, IDatabase db
+	) {
 		this.db = Objects.requireNonNull(db);
-		this.key = Objects.requireNonNull(key);
+		this.cipher = Objects.requireNonNull(cipher);
 		this.reader = Objects.requireNonNull(reader);
 	}
 
-	public static LibReader of(SecretKey key, LibReader reader, IDatabase db) {
-		return new DecryptingLibReader(key, reader, db);
+	public static LibReader of(
+		Supplier<Cipher> cipher, LibReader reader, IDatabase db
+	) {
+		return new DecryptingLibReader(cipher, reader, db);
 	}
 
 	@Override
@@ -34,41 +46,86 @@ public class DecryptingLibReader implements LibReader {
 
 	@Override
 	public TechIndex techIndex() {
-		return null;
+		var data = decryptFile("index_A.enc");
+		if (data == null)
+			return null;
+		try (data) {
+			return IxTechIndex.readProto(data)
+				.syncWith(db)
+				.orElse(null);
+		} catch (IOException e) {
+			throw new RuntimeException(
+				"failed to parse tech-index", e);
+		}
 	}
 
 	@Override
 	public EnviIndex enviIndex() {
-		return null;
+		var data = decryptFile("index_B.enc");
+		if (data == null)
+			return null;
+		try (data) {
+			return IxEnviIndex.readProto(data)
+				.syncWith(db)
+				.orElse(null);
+		} catch (IOException e) {
+			throw new RuntimeException(
+				"failed to parse envi-index", e);
+		}
 	}
 
 	@Override
 	public ImpactIndex impactIndex() {
-		return null;
+		var data = decryptFile("index_C.enc");
+		if (data == null)
+			return null;
+		try (data) {
+			return IxImpactIndex.readProto(data)
+				.syncWith(db)
+				.orElse(null);
+		} catch (IOException e) {
+			throw new RuntimeException(
+				"failed to parse impact-index", e);
+		}
+	}
+
+	private ByteArrayInputStream decryptFile(String name) {
+		var file = new File(reader.library().folder(), name);
+		if (!file.exists())
+			return null;
+		try {
+			var data = Files.readAllBytes(file.toPath());
+			var decrypt = cipher.get();
+			decrypt.update(data);
+			return new ByteArrayInputStream(decrypt.doFinal());
+		} catch (Exception e) {
+			throw new RuntimeException(
+				"failed to decrypt file: " + name, e);
+		}
 	}
 
 	@Override
 	public MatrixReader matrixOf(LibMatrix matrix) {
-		return null;
+		return reader.matrixOf(matrix);
 	}
 
 	@Override
 	public double[] costs() {
-		return new double[0];
+		return reader.costs();
 	}
 
 	@Override
 	public double[] diagonalOf(LibMatrix matrix) {
-		return new double[0];
+		return reader.diagonalOf(matrix);
 	}
 
 	@Override
 	public double[] columnOf(LibMatrix matrix, int col) {
-		return new double[0];
+		return reader.columnOf(matrix, col);
 	}
 
 	@Override
 	public void dispose() {
-		LibReader.super.dispose();
+		reader.dispose();
 	}
 }

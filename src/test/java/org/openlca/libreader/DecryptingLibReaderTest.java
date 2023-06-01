@@ -5,6 +5,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.openlca.core.database.Derby;
 import org.openlca.core.database.IDatabase;
+import org.openlca.core.library.LibMatrix;
 import org.openlca.core.library.Library;
 import org.openlca.core.library.LibraryExport;
 import org.openlca.core.library.Mounter;
@@ -13,6 +14,7 @@ import org.openlca.core.model.FlowProperty;
 import org.openlca.core.model.ImpactCategory;
 import org.openlca.core.model.Process;
 import org.openlca.core.model.UnitGroup;
+import org.openlca.util.Dirs;
 
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
@@ -39,8 +41,7 @@ public class DecryptingLibReaderTest {
 	public void setup() throws Exception {
 		sdb = Derby.createInMemory();
 		tdb = Derby.createInMemory();
-		// tempDir = Files.createTempDirectory("_olca_lib").toFile();
-		tempDir = new File("target");
+		tempDir = Files.createTempDirectory("_olca_lib").toFile();
 
 		var keySpec = new PBEKeySpec(PASSWORD, SALT, 4096, 128);
 		var keyData = SecretKeyFactory
@@ -54,7 +55,7 @@ public class DecryptingLibReaderTest {
 	public void cleanup() throws Exception {
 		sdb.close();
 		tdb.close();
-		// Dirs.delete(tempDir);
+		Dirs.delete(tempDir);
 	}
 
 	@Test
@@ -87,6 +88,9 @@ public class DecryptingLibReaderTest {
 
 		// run tests
 		checkTechIndex(reader);
+		checkEnviIndex(reader);
+		checkImpactIndex(reader);
+		checkMatrices(reader);
 	}
 
 	private void encrypt(Library lib) throws Exception {
@@ -120,5 +124,33 @@ public class DecryptingLibReaderTest {
 		var techFlow = techIdx.at(0);
 		assertEquals("P", techFlow.provider().name);
 		assertEquals("p", techFlow.flow().name);
+	}
+
+	private void checkEnviIndex(LibReader reader) {
+		var enviIdx = reader.enviIndex();
+		assertEquals(1, enviIdx.size());
+		var enviFlow = enviIdx.at(0);
+		assertEquals("e", enviFlow.flow().name);
+	}
+
+	private void checkImpactIndex(LibReader reader) {
+		var impactIdx = reader.impactIndex();
+		assertEquals(1, impactIdx.size());
+		var impact = impactIdx.at(0);
+		assertEquals("I", impact.name);
+	}
+
+	private void checkMatrices(LibReader reader) {
+		var A = reader.matrixOf(LibMatrix.A);
+		var B = reader.matrixOf(LibMatrix.B);
+		var C = reader.matrixOf(LibMatrix.C);
+		for (var m : List.of(A, B, C)) {
+			assertEquals(1, m.rows());
+			assertEquals(1, m.columns());
+		}
+
+		assertEquals(1, A.get(0, 0), 1e-10);
+		assertEquals(21, B.get(0, 0), 1e-10);
+		assertEquals(2, C.get(0, 0), 1e-10);
 	}
 }

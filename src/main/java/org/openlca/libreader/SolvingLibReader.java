@@ -28,6 +28,10 @@ public class SolvingLibReader implements LibReader {
 			: new SolvingLibReader(CachingLibReader.of(reader), solver);
 	}
 
+	public static SolvingLibReader of(LibReader reader) {
+		return of(reader, MatrixSolver.get());
+	}
+
 	MatrixCache cache() {
 		return reader.cache();
 	}

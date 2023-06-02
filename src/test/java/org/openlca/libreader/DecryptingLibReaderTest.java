@@ -80,11 +80,9 @@ public class DecryptingLibReaderTest {
 
 		// mount the library & create the reader
 		Mounter.of(tdb, lib).run();
-		var reader = CachingLibReader.of(DecryptingLibReader.of(
-			() -> cipherOf(Cipher.DECRYPT_MODE),
-			DirectLibReader.of(lib, tdb),
-			tdb));
-		// var reader = DirectLibReader.of(lib, tdb);
+		var reader = LibReader.of(lib, tdb)
+			.withDecryption(() -> cipherOf(Cipher.DECRYPT_MODE))
+			.create();
 
 		// run tests
 		checkTechIndex(reader);

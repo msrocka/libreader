@@ -5,8 +5,8 @@ This is an experimental implementation of a protocol for reading data from an op
 * [x] reading matrix and index data directly from disk (`DirectLibReader`)
 * [x] caching data (`CachingLibReader`)
 * [x] calculating columns of the inverse or intensities on demand without the need for pre-calculation (`SolvingLibReader`)
+* [x] support for libraries with encrypted data (`DecryptingLibReader`)
 * [ ] support for running Monte Carlo simulations with library data (`SimulatingLibReader`)
-* [ ] support for libraries with encrypted data (`DecryptingLibReader`)
 * [ ] support for libraries with data quality information attached
 
 Other implementations are possible by implementing the `LibReader` interface. The readers can be chained together to create readers with combined functionalities which are then added to a registry, e.g.:
